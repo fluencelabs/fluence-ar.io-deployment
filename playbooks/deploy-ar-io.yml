@@ -1,0 +1,96 @@
+---
+# playbooks/deploy-ar-io.yml
+# Deploy AR.IO Gateway - one of many possible services
+
+- name: Deploy AR.IO Gateway
+  hosts: ar_io_nodes
+  become: yes
+  
+  vars:
+    # AR.IO specific variables
+    ar_io_repo: "https://github.com/ar-io/ar-io-node"
+    install_path: "/opt/ar-io-node"
+    domain_name: "{{ vault_domain_name }}"
+    ar_io_wallet: "{{ vault_ar_io_wallet }}"
+    observer_wallet: "{{ vault_observer_wallet }}"
+  
+  vars_files:
+    - ../group_vars/ar_io_nodes/vault.yml
+  
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: [git, docker.io, docker-compose, nginx, certbot, openssl]
+        state: present
+        update_cache: yes
+    
+    - name: Clone AR.IO repository
+      git:
+        repo: "{{ ar_io_repo }}"
+        dest: "{{ install_path }}"
+        version: main
+    
+    - name: Create .env file
+      copy:
+        content: |
+          GRAPHQL_HOST=arweave.net
+          GRAPHQL_PORT=443
+          START_HEIGHT=1000000
+          RUN_OBSERVER=true
+          # ARNS_ROOT_HOST={{ domain_name }}  # Uncomment only if you have wildcard DNS setup
+          AR_IO_WALLET={{ ar_io_wallet }}
+          OBSERVER_WALLET={{ observer_wallet }}
+        dest: "{{ install_path }}/.env"
+    
+    - name: Start AR.IO with docker-compose
+      command: docker-compose up -d
+      args:
+        chdir: "{{ install_path }}"
+    
+    - name: Generate self-signed certificate
+      command: >
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+        -keyout /etc/ssl/private/{{ domain_name }}.key
+        -out /etc/ssl/certs/{{ domain_name }}.crt
+        -subj "/C=US/ST=State/L=City/O=Organization/CN={{ domain_name }}"
+      args:
+        creates: /etc/ssl/certs/{{ domain_name }}.crt
+    
+    - name: Configure nginx
+      copy:
+        content: |
+          server {
+              listen 80;
+              server_name {{ domain_name }} *.{{ domain_name }};
+              return 301 https://$host$request_uri;
+          }
+          
+          server {
+              listen 443 ssl;
+              server_name {{ domain_name }} *.{{ domain_name }};
+              
+              ssl_certificate /etc/ssl/certs/{{ domain_name }}.crt;
+              ssl_certificate_key /etc/ssl/private/{{ domain_name }}.key;
+              
+              location / {
+                  proxy_pass http://localhost:3000;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_http_version 1.1;
+              }
+          }
+        dest: /etc/nginx/sites-available/ar-io
+    
+    - name: Enable site
+      file:
+        src: /etc/nginx/sites-available/ar-io
+        dest: /etc/nginx/sites-enabled/ar-io
+        state: link
+      notify: restart nginx
+  
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted

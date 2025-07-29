@@ -1,0 +1,46 @@
+---
+# playbooks/cleanup-ar-io.yml
+# Remove AR.IO Gateway installation and restore server to clean state
+
+- name: Cleanup AR.IO Gateway
+  hosts: ar_io_nodes
+  become: yes
+  
+  tasks:
+    - name: Stop docker containers
+      command: docker-compose down --volumes --remove-orphans
+      args:
+        chdir: /opt/ar-io-node
+      ignore_errors: yes
+    
+    - name: Remove AR.IO directory
+      file:
+        path: /opt/ar-io-node
+        state: absent
+    
+    - name: Remove nginx configs
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/nginx/sites-enabled/ar-io
+        - /etc/nginx/sites-available/ar-io
+    
+    - name: Remove self-signed certificates
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/ssl/certs/*.crt
+        - /etc/ssl/private/*.key
+      ignore_errors: yes
+    
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+      ignore_errors: yes
+      
+    - name: Clean up Docker images (optional)
+      command: docker image prune -f
+      ignore_errors: yes

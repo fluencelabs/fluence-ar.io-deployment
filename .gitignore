@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Ansible
+inventory/*/hosts
+group_vars/*/vault.yml
+host_vars/
+*.retry
+
+# Secrets
+secrets/
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.bak

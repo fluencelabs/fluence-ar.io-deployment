@@ -1,0 +1,13 @@
+---
+# group_vars/ar_io_nodes/vault.yml.example
+# Copy this to vault.yml and configure with your values
+
+# Your server IP address or domain name
+vault_domain_name: "YOUR.SERVER.IP.ADDRESS"
+
+# Your Arweave wallet address (43 characters)
+# Get from https://arweave.app
+vault_ar_io_wallet: "your-arweave-wallet-address-43-characters-long"
+
+# Observer wallet address (can be the same as above)
+vault_observer_wallet: "observer-wallet-address-43-characters-long"
