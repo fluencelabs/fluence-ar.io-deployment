@@ -1,0 +1,13 @@
+[project]
+name = "fluence-ar-io-deployment"
+version = "0.1.0"
+description = "Ansible deployment for AR.IO Gateway nodes"
+requires-python = ">=3.9"
+dependencies = [
+    "ansible>=6.0.0,<8.0.0",
+    "ansible-core>=2.13.0,<2.15.0",
+    "requests>=2.25.0",
+]
+
+[tool.uv]
+dev-dependencies = []

@@ -7,7 +7,7 @@ Ansible deployment for AR.IO Gateway nodes.
 1. **Clone the repository**
    ```bash
    git clone <repo-url>
-   cd ansible-deployments
+   cd fluence-ar.io-deployment
    ```
 
 2. **Create and activate venv**
@@ -21,21 +21,36 @@ Ansible deployment for AR.IO Gateway nodes.
    uv sync
    ```
 
-4. **Configure inventory**
-   Edit `inventory/production/hosts` with your servers
-
-5. **Configure vault**
-   Edit `group_vars/ar_io_nodes/vault.yml` with your domain and wallet addresses
-
-6. **Deploy AR.IO Gateway**
-   ```bash
-   make test          # Test connectivity
-   make deploy-ar-io  # Deploy the gateway
+4. **Configure Fluence Cloud API**
+   Create `fluence-vm.yml` with your API credentials:
+   ```yaml
+   api_key: "your-fluence-api-key"
+   ssh_key_name: "your-ssh-public-key"
    ```
 
-7. **Test your gateway**
+5. **Create VMs via Fluence Cloud**
    ```bash
-   curl -k --tlsv1.2 https://YOUR-SERVER-IP/info
+   make create-vm VM_NAME=ar-io-node-1  # Creates VM and adds to inventory
+   make create-vm VM_NAME=ar-io-node-2  # Create additional VMs as needed
+   make list-vms                         # Verify VMs are created
+   ```
+
+6. **Configure vault**
+   Create `group_vars/ar_io_nodes/vault.yml` with your wallet addresses
+   ```yaml
+   vault_ar_io_wallet: "your-arweave-wallet-address-43-characters-long"
+   vault_observer_wallet: "observer-wallet-address-43-characters-long"
+   ```
+
+7. **Deploy AR.IO Gateway**
+   ```bash
+   make test          # Test connectivity to created VMs
+   make deploy-ar-io  # Deploy the gateway to all VMs
+   ```
+
+8. **Test your gateway**
+   ```bash
+   curl -k --tlsv1.2 https://VM-IP/info
    ```
 
 ## Structure
@@ -50,12 +65,20 @@ Ansible deployment for AR.IO Gateway nodes.
 
 ```bash
 make help           # Show available commands
+make create-vm VM_NAME=ar-io-node-X # Create new VM
+make delete-vm      # Delete VM (interactive selection)
+make list-vms       # List all VMs
 make test          # Test server connectivity
-make deploy-ar-io  # Deploy AR.IO gateway
-make cleanup-ar-io # Remove AR.IO installation
+make deploy-ar-io [HOST=hostname]  # Deploy AR.IO gateway
+make cleanup-ar-io [HOST=hostname] # Remove AR.IO installation
 ```
 
 ## Configuration
+
+### Fluence Cloud API
+Edit `fluence-vm.yml`:
+- `api_key`: Your Fluence Cloud API key
+- `ssh_key_name`: SSH key name registered in your Fluence account
 
 ### Vault Variables
 Edit `group_vars/ar_io_nodes/vault.yml`:

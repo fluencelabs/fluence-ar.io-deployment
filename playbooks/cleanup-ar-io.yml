@@ -4,14 +4,14 @@
 
 - name: Cleanup AR.IO Gateway
   hosts: ar_io_nodes
-  become: yes
+  become: true
   
   tasks:
     - name: Stop docker containers
       command: docker-compose down --volumes --remove-orphans
       args:
         chdir: /opt/ar-io-node
-      ignore_errors: yes
+      ignore_errors: true
     
     - name: Remove AR.IO directory
       file:
@@ -33,14 +33,14 @@
       loop:
         - /etc/ssl/certs/*.crt
         - /etc/ssl/private/*.key
-      ignore_errors: yes
+      ignore_errors: true
     
     - name: Restart nginx
       service:
         name: nginx
         state: restarted
-      ignore_errors: yes
+      ignore_errors: true
       
     - name: Clean up Docker images (optional)
       command: docker image prune -f
-      ignore_errors: yes
+      ignore_errors: true

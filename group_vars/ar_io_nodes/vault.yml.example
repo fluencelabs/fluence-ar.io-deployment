@@ -2,8 +2,9 @@
 # group_vars/ar_io_nodes/vault.yml.example
 # Copy this to vault.yml and configure with your values
 
-# Your server IP address or domain name
-vault_domain_name: "YOUR.SERVER.IP.ADDRESS"
+# Per-host domain names (VM name -> IP mapping)
+# This will be automatically managed by fluence_vm.py
+vault_domain_names: {}
 
 # Your Arweave wallet address (43 characters)
 # Get from https://arweave.app
